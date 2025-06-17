@@ -1,7 +1,4 @@
-<!-- ❗Errors in the form are set on line 60 -->
 <script setup>
-import { VForm } from 'vuetify/components/VForm'
-import AuthProvider from '@/views/pages/authentication/AuthProvider.vue'
 import { useGenerateImageVariant } from '@core/composable/useGenerateImageVariant'
 import authV2LoginIllustrationBorderedDark from '@images/pages/auth-v2-login-illustration-bordered-dark.png'
 import authV2LoginIllustrationBorderedLight from '@images/pages/auth-v2-login-illustration-bordered-light.png'
@@ -11,6 +8,9 @@ import authV2MaskDark from '@images/pages/misc-mask-dark.png'
 import authV2MaskLight from '@images/pages/misc-mask-light.png'
 import { VNodeRenderer } from '@layouts/components/VNodeRenderer'
 import { themeConfig } from '@themeConfig'
+
+import authV1BottomShape from '@images/svg/auth-v1-bottom-shape.svg?raw'
+import authV1TopShape from '@images/svg/auth-v1-top-shape.svg?raw'
 
 const authThemeImg = useGenerateImageVariant(authV2LoginIllustrationLight, authV2LoginIllustrationDark, authV2LoginIllustrationBorderedLight, authV2LoginIllustrationBorderedDark, true)
 const authThemeMask = useGenerateImageVariant(authV2MaskLight, authV2MaskDark)
@@ -22,224 +22,201 @@ definePage({
   },
 })
 
-const isPasswordVisible = ref(false)
 const route = useRoute()
 const router = useRouter()
 const ability = useAbility()
 
-const errors = ref({
-  email: undefined,
-  password: undefined,
-})
+// Discord OAuth Configuration
+const DISCORD_AUTH_URL = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api/auth/discord`
 
-const refVForm = ref()
+const isLoading = ref(false)
+const authError = ref('')
 
-const credentials = ref({
-  email: 'admin@demo.com',
-  password: 'admin',
-})
+// Handle Discord login redirect
+const loginWithDiscord = () => {
+  // Store the intended destination
+  if (route.query.to) {
+    sessionStorage.setItem('discord_auth_redirect', String(route.query.to))
+  }
+  
+  // Redirect to Discord OAuth
+  window.location.href = DISCORD_AUTH_URL
+}
 
-const rememberMe = ref(false)
+// Handle Discord OAuth callback (when user returns from Discord)
+const handleDiscordCallback = async () => {
+  const urlParams = new URLSearchParams(window.location.search)
+  const token = urlParams.get('token')
+  const error = urlParams.get('error')
 
-const login = async () => {
-  try {
-    const res = await $api('/auth/login', {
-      method: 'POST',
-      body: {
-        email: credentials.value.email,
-        password: credentials.value.password,
-      },
-      onResponseError({ response }) {
-        errors.value = response._data.errors
-      },
-    })
+  if (error) {
+    authError.value = 'Discord authentication failed. Please try again.'
+    
+    return
+  }
 
-    const { accessToken, userData, userAbilityRules } = res
+  if (token) {
+    try {
+      isLoading.value = true
+      
+      // Verify token and get user data from your backend
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api/auth/verify`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token }),
+      })
 
-    useCookie('userAbilityRules').value = userAbilityRules
-    ability.update(userAbilityRules)
-    useCookie('userData').value = userData
-    useCookie('accessToken').value = accessToken
+      if (!response.ok) {
+        throw new Error('Token verification failed')
+      }
 
-    // Redirect to `to` query if exist or redirect to index route
+      const { user } = await response.json()
 
-    // ❗ nextTick is required to wait for DOM updates and later redirect
-    await nextTick(() => {
-      router.replace(route.query.to ? String(route.query.to) : '/')
-    })
-  } catch (err) {
-    console.error(err)
+      // Define user abilities (you can customize this based on your needs)
+      const userAbilityRules = [
+        {
+          action: 'manage',
+          subject: 'all',
+        },
+      ]
+
+      // Prepare user data in Vuexy format
+      const userData = {
+        id: user.discordId,
+        fullName: user.username,
+        username: user.username,
+        avatar: user.avatar ? `https://cdn.discordapp.com/avatars/${user.discordId}/${user.avatar}.png` : null,
+        email: user.email || `${user.username}@discord.local`,
+        role: 'admin', // You can customize this
+      }
+
+      // Store data in cookies (Vuexy way)
+      useCookie('userAbilityRules').value = userAbilityRules
+      useCookie('userData').value = userData
+      useCookie('accessToken').value = token
+
+      // Update abilities
+      ability.update(userAbilityRules)
+
+      // Get redirect destination
+      const redirectTo = sessionStorage.getItem('discord_auth_redirect') || route.query.to || '/'
+
+      sessionStorage.removeItem('discord_auth_redirect')
+
+      // Redirect to dashboard
+      await nextTick(() => {
+        router.replace(String(redirectTo))
+      })
+
+    } catch (err) {
+      console.error('Discord auth error:', err)
+      authError.value = 'Authentication failed. Please try again.'
+    } finally {
+      isLoading.value = false
+    }
   }
 }
 
-const onSubmit = () => {
-  refVForm.value?.validate().then(({ valid: isValid }) => {
-    if (isValid)
-      login()
-  })
-}
+// Check if this is a callback from Discord
+onMounted(() => {
+  const urlParams = new URLSearchParams(window.location.search)
+  if (urlParams.has('token') || urlParams.has('error')) {
+    handleDiscordCallback()
+  }
+})
 </script>
 
 <template>
-  <RouterLink to="/">
-    <div class="auth-logo d-flex align-center gap-x-3">
-      <VNodeRenderer :nodes="themeConfig.app.logo" />
-      <h1 class="auth-title">
-        {{ themeConfig.app.title }}
-      </h1>
-    </div>
-  </RouterLink>
-
-  <VRow
-    no-gutters
-    class="auth-wrapper bg-surface"
-  >
-    <VCol
-      md="8"
-      class="d-none d-md-flex"
-    >
-      <div class="position-relative bg-background w-100 me-0">
-        <div
-          class="d-flex align-center justify-center w-100 h-100"
-          style="padding-inline: 6.25rem;"
-        >
-          <VImg
-            max-width="613"
-            :src="authThemeImg"
-            class="auth-illustration mt-16 mb-2"
-          />
-        </div>
-
-        <img
-          class="auth-footer-mask"
-          :src="authThemeMask"
-          alt="auth-footer-mask"
-          height="280"
-          width="100"
-        >
-      </div>
-    </VCol>
-
-    <VCol
-      cols="12"
-      md="4"
-      class="auth-card-v2 d-flex align-center justify-center"
-    >
+  <div class="auth-wrapper d-flex align-center justify-center pa-4">
+    <div class="position-relative my-sm-16">
+      <!-- 👉 Top shape -->
+      <VNodeRenderer
+        :nodes="h('div', { innerHTML: authV1TopShape })"
+        class="text-primary auth-v1-top-shape d-none d-sm-block"
+      />
+      <!-- 👉 Bottom shape -->
+      <VNodeRenderer
+        :nodes="h('div', { innerHTML: authV1BottomShape })"
+        class="text-primary auth-v1-bottom-shape d-none d-sm-block"
+      />
+      <!-- 👉 Auth Card -->
       <VCard
-        flat
-        :max-width="500"
-        class="mt-12 mt-sm-0 pa-4"
+        class="auth-card"
+        max-width="460"
+        :class="$vuetify.display.smAndUp ? 'pa-6' : 'pa-0'"
       >
+        <VCardItem class="justify-center">
+          <VCardTitle>
+            <RouterLink to="/">
+              <div class="app-logo">
+                <VNodeRenderer :nodes="themeConfig.app.logo" />
+                <h1 class="app-logo-title">
+                  {{ themeConfig.app.title }}
+                </h1>
+              </div>
+            </RouterLink>
+          </VCardTitle>
+        </VCardItem>
+        
         <VCardText>
           <h4 class="text-h4 mb-1">
-            Welcome to <span class="text-capitalize"> {{ themeConfig.app.title }} </span>! 👋🏻
+            Welcome to <span class="text-capitalize">{{ themeConfig.app.title }}</span>! 👋🏻
           </h4>
           <p class="mb-0">
-            Please sign-in to your account and start the adventure
+            Sign in with Discord to access your account
           </p>
         </VCardText>
-        <VCardText>
+
+        <!-- Error Alert -->
+        <VCardText v-if="authError">
           <VAlert
-            color="primary"
+            color="error"
             variant="tonal"
+            class="mb-4"
           >
-            <p class="text-sm mb-2">
-              Admin Email: <strong>admin@demo.com</strong> / Pass: <strong>admin</strong>
-            </p>
-            <p class="text-sm mb-0">
-              Client Email: <strong>client@demo.com</strong> / Pass: <strong>client</strong>
-            </p>
+            {{ authError }}
           </VAlert>
         </VCardText>
-        <VCardText>
-          <VForm
-            ref="refVForm"
-            @submit.prevent="onSubmit"
-          >
+
+        <!-- Loading State -->
+        <VCardText v-if="isLoading">
+          <div class="d-flex align-center justify-center py-8">
+            <VProgressCircular
+              indeterminate
+              color="primary"
+              size="50"
+            />
+          </div>
+        </VCardText>
+
+        <!-- Discord Login Form -->
+        <VCardText v-else>
+          <VForm @submit.prevent="loginWithDiscord">
             <VRow>
-              <!-- email -->
               <VCol cols="12">
-                <AppTextField
-                  v-model="credentials.email"
-                  label="Email"
-                  placeholder="johndoe@email.com"
-                  type="email"
-                  autofocus
-                  :rules="[requiredValidator, emailValidator]"
-                  :error-messages="errors.email"
-                />
-              </VCol>
-
-              <!-- password -->
-              <VCol cols="12">
-                <AppTextField
-                  v-model="credentials.password"
-                  label="Password"
-                  placeholder="············"
-                  :rules="[requiredValidator]"
-                  :type="isPasswordVisible ? 'text' : 'password'"
-                  autocomplete="password"
-                  :error-messages="errors.password"
-                  :append-inner-icon="isPasswordVisible ? 'tabler-eye-off' : 'tabler-eye'"
-                  @click:append-inner="isPasswordVisible = !isPasswordVisible"
-                />
-
-                <div class="d-flex align-center flex-wrap justify-space-between my-6">
-                  <VCheckbox
-                    v-model="rememberMe"
-                    label="Remember me"
-                  />
-                  <RouterLink
-                    class="text-primary ms-2 mb-1"
-                    :to="{ name: 'forgot-password' }"
-                  >
-                    Forgot Password?
-                  </RouterLink>
-                </div>
-
+                <!-- Discord login button -->
                 <VBtn
                   block
                   type="submit"
+                  size="large"
+                  color="primary"
+                  :disabled="isLoading"
                 >
-                  Login
+                  <VIcon
+                    icon="mdi-discord"
+                    class="me-2"
+                  />
+                  Continue with Discord
                 </VBtn>
-              </VCol>
-
-              <!-- create account -->
-              <VCol
-                cols="12"
-                class="text-center"
-              >
-                <span>New on our platform?</span>
-                <RouterLink
-                  class="text-primary ms-1"
-                  :to="{ name: 'register' }"
-                >
-                  Create an account
-                </RouterLink>
-              </VCol>
-              <VCol
-                cols="12"
-                class="d-flex align-center"
-              >
-                <VDivider />
-                <span class="mx-4">or</span>
-                <VDivider />
-              </VCol>
-
-              <!-- auth providers -->
-              <VCol
-                cols="12"
-                class="text-center"
-              >
-                <AuthProvider />
               </VCol>
             </VRow>
           </VForm>
         </VCardText>
       </VCard>
-    </VCol>
-  </VRow>
+    </div>
+  </div>
 </template>
 
 <style lang="scss">

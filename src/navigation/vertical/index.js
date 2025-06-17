@@ -1,8 +1,6 @@
-import appsAndPages from './apps-and-pages'
-import charts from './charts'
+import components from './components'
 import dashboard from './dashboard'
-import forms from './forms'
-import others from './others'
-import uiElements from './ui-elements'
+import misc from './misc'
 
-export default [...dashboard, ...appsAndPages, ...uiElements, ...forms, ...charts, ...others]
+
+export default [...dashboard, ...components, ...misc]
