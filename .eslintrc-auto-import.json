@@ -361,6 +361,7 @@
     "watchTriggerable": true,
     "watchWithFilter": true,
     "whenever": true,
-    "useDiscordAuth": true
+    "useDiscordAuth": true,
+    "useGuildManagement": true
   }
 }

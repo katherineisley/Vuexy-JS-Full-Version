@@ -8,11 +8,10 @@ export const redirects = [
     path: '/',
     name: 'index',
     redirect: to => {
-      // TODO: Get type from backend
       const userData = useCookie('userData')
       const userRole = userData.value?.role
       if (userRole === 'admin')
-        return { name: 'dashboard' }
+        return { name: 'dashboard' } // This will be your guild selection page
       if (userRole === 'client')
         return { name: 'access-control' }
       
@@ -29,43 +28,46 @@ export const redirects = [
     name: 'pages-account-settings',
     redirect: () => ({ name: 'pages-account-settings-tab', params: { tab: 'account' } }),
   },
+
+
+
+
 ]
+
+
 export const routes = [
-  // Email filter
+
+  
+  // Guild dashboard routes
   {
-    path: '/apps/email/filter/:filter',
-    name: 'apps-email-filter',
-    component: emailRouteComponent,
+    path: '/dashboard/:guild/home',
+    name: 'guild-dashboard-home',
+    component: () => import('@/pages/dashboard/[guild]/home.vue'),
     meta: {
-      navActiveLink: 'apps-email',
-      layoutWrapperClasses: 'layout-content-height-fixed',
+      requiresAuth: true,
+    },
+  },
+  {
+    path: '/dashboard/:guild/welcome',
+    name: 'guild-dashboard-welcome',
+    component: () => import('@/pages/dashboard/[guild]/welcome.vue'),
+    meta: {
+      requiresAuth: true,
+    },
+  },
+  {
+    path: '/dashboard/:guild/tickets',
+    name: 'guild-dashboard-tickets',
+    component: () => import('@/pages/dashboard/[guild]/tickets.vue'),
+    meta: {
+      requiresAuth: true,
     },
   },
 
-  // Email label
+
+  // Redirect guild root to home
   {
-    path: '/apps/email/label/:label',
-    name: 'apps-email-label',
-    component: emailRouteComponent,
-    meta: {
-      // contentClass: 'email-application',
-      navActiveLink: 'apps-email',
-      layoutWrapperClasses: 'layout-content-height-fixed',
-    },
-  },
-  {
-    path: '/dashboards/logistics',
-    name: 'dashboards-logistics',
-    component: () => import('@/pages/apps/logistics/dashboard.vue'),
-  },
-  {
-    path: '/dashboards/academy',
-    name: 'dashboards-academy',
-    component: () => import('@/pages/apps/academy/dashboard.vue'),
-  },
-  {
-    path: '/apps/ecommerce/dashboard',
-    name: 'apps-ecommerce-dashboard',
-    component: () => import('@/pages/dashboards/ecommerce.vue'),
+    path: '/dashboard/:guild',
+    redirect: to => ({ name: 'guild-dashboard-home', params: to.params }),
   },
 ]
