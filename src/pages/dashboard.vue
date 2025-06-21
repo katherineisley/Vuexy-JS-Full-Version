@@ -45,7 +45,7 @@ const fetchAdminGuilds = async () => {
 
 // Navigate to guild dashboard
 const selectGuild = guild => {
-  router.push(`/dashboard/${guild.name.toLowerCase().replace(/\s+/g, '-')}`)
+  router.push(`/dashboard/${guild.id}`)
 }
 
 // Get guild icon URL

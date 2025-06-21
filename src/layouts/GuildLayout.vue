@@ -2,23 +2,21 @@
 const route = useRoute()
 const router = useRouter()
 
-// Extract guild name from route
-const guildName = computed(() => route.params.guild)
+// Extract guild ID from route
+const guildId = computed(() => route.params.guild)
 
 // Current guild info
 const currentGuild = ref(null)
 const loading = ref(true)
 
-// Fetch guild information
+// Fetch guild information by ID
 const fetchGuildInfo = async () => {
   try {
     loading.value = true
 
     const token = useCookie('accessToken').value
     
-    // You'll need to implement a way to get guild ID from name
-    // For now, we'll store it in a composable or use route meta
-    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api/guilds/${guildName.value}`, {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/guilds/${guildId.value}`, {
       headers: {
         'Authorization': `Bearer ${token}`,
       },
@@ -44,30 +42,6 @@ watch(() => route.params.guild, () => {
     fetchGuildInfo()
   }
 }, { immediate: true })
-
-// Navigation items for guild dashboard
-const guildNavigation = computed(() => [
-  {
-    title: 'Home',
-    icon: 'tabler-home',
-    to: `/dashboard/${guildName.value}/home`,
-  },
-  {
-    title: 'Welcome',
-    icon: 'tabler-hand-wave',
-    to: `/dashboard/${guildName.value}/welcome`,
-  },
-  {
-    title: 'Tickets',
-    icon: 'tabler-ticket',
-    to: `/dashboard/${guildName.value}/tickets`,
-  },
-  {
-    title: 'Settings',
-    icon: 'tabler-settings',
-    to: `/dashboard/${guildName.value}/settings`,
-  },
-])
 </script>
 
 <template>
@@ -103,50 +77,46 @@ const guildNavigation = computed(() => [
             <VImg
               v-if="currentGuild.icon"
               :src="`https://cdn.discordapp.com/icons/${currentGuild.id}/${currentGuild.icon}.png`"
+              :alt="currentGuild.name"
             />
-            <VIcon
+            <span
               v-else
-              icon="tabler-users"
-            />
+              class="text-h6"
+            >
+              {{ currentGuild.name?.charAt(0) }}
+            </span>
           </VAvatar>
           
           <div>
-            <h4 class="text-h4 mb-1">
+            <h5 class="text-h5 mb-1">
               {{ currentGuild.name }}
-            </h4>
-            <p class="text-body-2 mb-0 text-medium-emphasis">
-              {{ currentGuild.memberCount }} members
+            </h5>
+            <p class="text-body-2 mb-0">
+              {{ currentGuild.memberCount || 0 }} members
             </p>
           </div>
         </div>
       </VCardText>
     </VCard>
 
-    <!-- Guild Navigation -->
-    <VCard class="mb-6">
-      <VCardText class="pa-0">
-        <VTabs
-          :model-value="route.path"
+    <!-- Page Content -->
+    <slot />
+  </div>
+  
+  <!-- Error state -->
+  <div v-else>
+    <VCard>
+      <VCardText class="text-center pa-6">
+        <h6 class="text-h6 mb-2">
+          Guild not found
+        </h6>
+        <VBtn
           color="primary"
-          slider-color="primary"
+          @click="$router.push('/dashboard')"
         >
-          <VTab
-            v-for="item in guildNavigation"
-            :key="item.to"
-            :value="item.to"
-            :to="item.to"
-          >
-            <VIcon
-              :icon="item.icon"
-              class="me-2"
-            />
-            {{ item.title }}
-          </VTab>
-        </VTabs>
+          Go back to Guild Selection
+        </VBtn>
       </VCardText>
     </VCard>
-
-    <!-- Content -->
-    <slot />
   </div>
 </template>
