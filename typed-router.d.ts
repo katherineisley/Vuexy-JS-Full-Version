@@ -68,6 +68,7 @@ declare module 'vue-router/auto-routes' {
     'components-timeline': RouteRecordInfo<'components-timeline', '/components/timeline', Record<never, never>, Record<never, never>>,
     'components-tooltip': RouteRecordInfo<'components-tooltip', '/components/tooltip', Record<never, never>, Record<never, never>>,
     'dashboard': RouteRecordInfo<'dashboard', '/dashboard', Record<never, never>, Record<never, never>>,
+    'dashboard-guild': RouteRecordInfo<'dashboard-guild', '/dashboard/:guild', { guild: ParamValue<true> }, { guild: ParamValue<false> }>,
     'dashboard-guild-home': RouteRecordInfo<'dashboard-guild-home', '/dashboard/:guild/home', { guild: ParamValue<true> }, { guild: ParamValue<false> }>,
     'dashboard-guild-tickets': RouteRecordInfo<'dashboard-guild-tickets', '/dashboard/:guild/tickets', { guild: ParamValue<true> }, { guild: ParamValue<false> }>,
     'dashboard-guild-welcome': RouteRecordInfo<'dashboard-guild-welcome', '/dashboard/:guild/welcome', { guild: ParamValue<true> }, { guild: ParamValue<false> }>,

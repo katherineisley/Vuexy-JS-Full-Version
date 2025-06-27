@@ -1,5 +1,3 @@
-const emailRouteComponent = () => import('@/pages/apps/email/index.vue')
-
 // 👉 Redirects
 export const redirects = [
   // ℹ️ We are redirecting to different pages based on role.
@@ -28,46 +26,9 @@ export const redirects = [
     name: 'pages-account-settings',
     redirect: () => ({ name: 'pages-account-settings-tab', params: { tab: 'account' } }),
   },
-
-
-
-
 ]
 
 
 export const routes = [
-
   
-  // Guild dashboard routes
-  {
-    path: '/dashboard/:guild/home',
-    name: 'guild-dashboard-home',
-    component: () => import('@/pages/dashboard/[guild]/home.vue'),
-    meta: {
-      requiresAuth: true,
-    },
-  },
-  {
-    path: '/dashboard/:guild/welcome',
-    name: 'guild-dashboard-welcome',
-    component: () => import('@/pages/dashboard/[guild]/welcome.vue'),
-    meta: {
-      requiresAuth: true,
-    },
-  },
-  {
-    path: '/dashboard/:guild/tickets',
-    name: 'guild-dashboard-tickets',
-    component: () => import('@/pages/dashboard/[guild]/tickets.vue'),
-    meta: {
-      requiresAuth: true,
-    },
-  },
-
-
-  // Redirect guild root to home
-  {
-    path: '/dashboard/:guild',
-    redirect: to => ({ name: 'guild-dashboard-home', params: to.params }),
-  },
 ]

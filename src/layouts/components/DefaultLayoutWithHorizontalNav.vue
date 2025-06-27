@@ -6,7 +6,6 @@ import { themeConfig } from '@themeConfig'
 // Components
 import Footer from '@/layouts/components/Footer.vue'
 import NavBarNotifications from '@/layouts/components/NavBarNotifications.vue'
-import NavSearchBar from '@/layouts/components/NavSearchBar.vue'
 import NavbarShortcuts from '@/layouts/components/NavbarShortcuts.vue'
 import NavbarThemeSwitcher from '@/layouts/components/NavbarThemeSwitcher.vue'
 import UserProfile from '@/layouts/components/UserProfile.vue'
@@ -16,16 +15,6 @@ import { VNodeRenderer } from '@layouts/components/VNodeRenderer'
 
 const route = useRoute()
 const router = useRouter()
-
-// Check if we're in a guild context
-const isInGuildContext = computed(() => {
-  return route.path.includes('/dashboard/') && route.params.guild
-})
-
-// Navigate to server selection
-const selectServer = () => {
-  router.push('/dashboard')
-}
 </script>
 
 <template>
@@ -45,16 +34,8 @@ const selectServer = () => {
       
       <VSpacer />
 
-      <!-- Search bar or Guild name -->
-      <div v-if="!isInGuildContext">
-        <NavSearchBar trigger-btn-class="ms-lg-n3" />
-      </div>
-      
       <!-- Guild context info -->
-      <div
-        v-else
-        class="d-flex align-center me-4"
-      >
+      <div class="d-flex align-center me-4">
         <h6 class="text-h6 font-weight-medium">
           {{ route.params.guild }}
         </h6>
@@ -68,21 +49,6 @@ const selectServer = () => {
       <NavbarThemeSwitcher />
       <NavbarShortcuts />
       <NavBarNotifications class="me-2" />
-      
-      <!-- Select Server Button - Only show in guild context -->
-      <VBtn
-        v-if="isInGuildContext"
-        variant="outlined"
-        color="primary"
-        class="me-2"
-        @click="selectServer"
-      >
-        <VIcon
-          icon="tabler-server"
-          class="me-2"
-        />
-        Select Server
-      </VBtn>
       
       <UserProfile />
     </template>

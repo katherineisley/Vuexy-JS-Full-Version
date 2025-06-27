@@ -27,7 +27,7 @@ const router = useRouter()
 const ability = useAbility()
 
 // Discord OAuth Configuration
-const DISCORD_AUTH_URL = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api/auth/discord`
+const DISCORD_AUTH_URL = `${import.meta.env.VITE_API_BASE_URL}/api/auth/discord`
 
 const isLoading = ref(false)
 const authError = ref('')
@@ -60,7 +60,7 @@ const handleDiscordCallback = async () => {
       isLoading.value = true
       
       // Verify token and get user data from your backend
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api/auth/verify`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/verify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

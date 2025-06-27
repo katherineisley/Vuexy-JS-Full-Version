@@ -11,7 +11,7 @@ export const useGuildManagement = () => {
       
       const token = useCookie('accessToken').value
 
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api/guilds/admin-guilds`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/guilds/admin-guilds`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },

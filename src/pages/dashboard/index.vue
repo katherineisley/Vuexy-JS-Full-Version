@@ -4,6 +4,7 @@ import NavbarThemeSwitcher from '@/layouts/components/NavbarThemeSwitcher.vue'
 
 definePage({
   meta: {
+    layout: 'blank',
     requiresAuth: true,
   },
 })
@@ -22,7 +23,7 @@ const fetchAdminGuilds = async () => {
 
     const token = useCookie('accessToken').value
     
-    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api/guilds/admin-guilds`, {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/guilds/admin-guilds`, {
       headers: {
         'Authorization': `Bearer ${token}`,
       },
@@ -65,6 +66,32 @@ const getUserAvatar = () => {
   
   return null
 }
+
+const ability = useAbility()
+
+// TODO: Get type from backend
+const userData = useCookie('userData')
+
+const logout = async () => {
+
+  // Remove "accessToken" from cookie
+  useCookie('accessToken').value = null
+
+  // Remove "userData" from cookie
+  userData.value = null
+
+  // Redirect to login page
+  await router.push('/login')
+
+  // ℹ️ We had to remove abilities in then block because if we don't nav menu items mutation is visible while redirecting user to login page
+
+  // Remove "userAbilities" from cookie
+  useCookie('userAbilityRules').value = null
+
+  // Reset ability to initial ability
+  ability.update([])
+}
+
 
 onMounted(() => {
   fetchAdminGuilds()
@@ -112,9 +139,20 @@ onMounted(() => {
           <!-- Theme Switcher -->
           <div
             class="position-absolute"
-            style="inset-block-start: 24px; inset-inline-end: 24px;"
+            style=" display: flex; align-items: center; gap: 8px;inset-block-start: 24px; inset-inline-end: 24px;"
           >
             <NavbarThemeSwitcher />
+            <div class="px-4 py-2">
+              <VBtn
+                block
+                size="small"
+                color="error"
+                append-icon="tabler-logout"
+                @click="logout"
+              >
+                Logout
+              </VBtn>
+            </div>
           </div>
         </div>
 
